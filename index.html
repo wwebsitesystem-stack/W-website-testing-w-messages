@@ -1,1 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>W-MESSAGES // TERMINAL</title>
+  <!-- Typography matching your spec -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-deep: #030305;
+      --bg-surface: #0c0c12;
+      --border-stark: #1a1a26;
+      --accent-purple: #6200EE;
+      --accent-glow: rgba(98, 0, 238, 0.15);
+      --text-muted-gold: #c5a880;
+      --text-main: #e2e2ec;
+      --text-dim: #62627a;
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Brutalist Terminal Container */
+    .terminal-container {
+      width: 100%;
+      max-width: 900px;
+      height: 550px;
+      background-color: var(--bg-surface);
+      border: 2px solid var(--border-stark);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Header Bar */
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 2px solid var(--border-stark);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--text-muted-gold);
+      box-shadow: 0 0 8px var(--text-muted-gold);
+    }
+
+    .status-dot.active {
+      background-color: var(--accent-purple);
+      box-shadow: 0 0 8px var(--accent-purple);
+    }
+
+    /* Core Workspace Components */
+    .terminal-body {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* View 1: Locked State Overlay */
+    .locked-state {
+      position: absolute;
+      inset: 0;
+      background-color: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      z-index: 10;
+      transition: opacity 0.4s ease, visibility 0.4s;
+    }
+
+    .locked-state.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .warning-box {
+      max-width: 500px;
+      border: 1px solid var(--border-stark);
+      padding: 24px;
+      background-color: var(--bg-deep);
+      margin-bottom: 24px;
+    }
+
+    .warning-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted-gold);
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .warning-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-dim);
+    }
+
+    .decrypt-input-wrap {
+      display: flex;
+      border: 1px solid var(--border-stark);
+      width: 100%;
+      max-width: 400px;
+      background-color: var(--bg-deep);
+      position: relative;
+    }
+
+    .decrypt-input-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border: 1px solid var(--accent-purple);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .decrypt-input-wrap:focus-within::after {
+      opacity: 1;
+    }
+
+    .decrypt-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 12px;
+      flex: 1;
+      letter-spacing: 0.1em;
+    }
+
+    .decrypt-btn {
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--border-stark);
+      color: var(--text-muted-gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 0 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .decrypt-btn:hover {
+      background-color: var(--accent-purple);
+      color: var(--text-main);
+    }
+
+    /* View 2: Unlocked Split Panel View */
+    .unlocked-interface {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .unlocked-interface.visible {
+      opacity: 1;
+    }
+
+    /* Live Feed Column */
+    .feed-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-stark);
+    }
+
+    .log-stream {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Custom Scrollbar for Brutalist look */
+    .log-stream::-webkit-scrollbar {
+      width: 4px;
+    }
+    .log-stream::-webkit-scrollbar-track {
+      background: var(--bg-deep);
+    }
+    .log-stream::-webkit-scrollbar-thumb {
+      background: var(--border-stark);
+    }
+    .log-stream::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-purple);
+    }
+
+    .log-entry {
+      animation: scanline 0.3s ease-out forwards;
+      word-break: break-all;
+    }
+
+    .timestamp { color: var(--text-dim); }
+    .tag-admin { color: var(--accent-purple); font-weight: bold; }
+    .tag-bot { color: var(--text-dim); }
+    .tag-mgr { color: var(--text-muted-gold); }
+    .msg-text { color: var(--text-main); }
+    .msg-warn { color: #ff5555; }
+
+    .input-bar {
+      border-top: 1px solid var(--border-stark);
+      padding: 12px;
+      background-color: var(--bg-deep);
+      display: flex;
+      align-items: center;
+    }
+
+    .input-prompt {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent-purple);
+      margin-right: 8px;
+    }
+
+    .terminal-msg-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      flex: 1;
+    }
+
+    /* Visualizer Reward Column */
+    .visualizer-column {
+      width: 320px;
+      background-color: var(--bg-deep);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .viz-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-stark);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted-gold);
+      letter-spacing: 0.05em;
+    }
+
+    canvas {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Animations */
+    @keyframes scanline {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-shake {
+      animation: shake 0.2s ease-in-out 0s 2;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+      100% { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="terminal-container" id="terminal">
+    <!-- Header -->
+    <div class="terminal-header">
+      <div>NODE // W-MESSAGES // ARCHIVE_LN-0</div>
+      <div class="system-status" id="systemStatus">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">SECURE_LOCKED</span>
+      </div>
+    </div>
+
+    <!-- Interface Body -->
+    <div class="terminal-body">
+      
+      <!-- LOCKED STATE OVERLAY (Option B Aesthetic) -->
+      <div class="locked-state" id="lockedState">
+        <div class="warning-box">
+          <div class="warning-title">[FATAL] CHANNEL_MUTED_BY_HOST</div>
+          <div class="warning-text">
+            Core transport layer is locked. State: <span style="color: var(--text-muted-gold);">STATUS_RESTRICTED_CLEARANCE</span>. No public peering agreements exist on this structural channel. To initialize listener threads and open downlinks, feed the local decryption engine a valid access phrase.
+          </div>
+        </div>
+        <div class="decrypt-input-wrap" id="inputWrapper">
+          <input type="text" class="decrypt-input" id="decryptInput" placeholder="ENTER ACCESS KEY..." autocomplete="off" spellcheck="false">
+          <button class="decrypt-btn" id="decryptBtn">EXEC</button>
+        </div>
+      </div>
+
+      <!-- UNLOCKED INTERFACE GRID -->
+      <div class="unlocked-interface" id="unlockedInterface">
+        
+        <!-- Chat Transmission Stream -->
+        <div class="feed-column">
+          <div class="log-stream" id="logStream">
+            <!-- Programmatic updates append here -->
+          </div>
+          <div class="input-bar">
+            <span class="input-prompt">guest@w-nodes:~$</span>
+            <input type="text" class="terminal-msg-input" id="terminalMsgInput" placeholder="Broadcast transmission over channel..." autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <!-- Reward Panel: Live Packet Visualizer -->
+        <div class="visualizer-column">
+          <div class="viz-header">TELEMETRY_STREAM // REALTIME_PACKETS</div>
+          <canvas id="packetCanvas"></canvas>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Historical Administrative Broadcast Feed Data
+    const backlogBroadcasts = [
+      { type: 'admin', text: 'dev_node_04 cleared. Re-routed traffic through backup sub-grid. The primary pipe was choking on unindexed packet bursts again.' },
+      { type: 'bot', text: 'Handshake failure on structural channel 0x9F. Purging dead sockets... 412 connections terminated.', isWarn: true },
+      { type: 'mgr', text: 'Reminder to all terminal operators: W-MESSAGES is under active telemetry logging. Do not use plaintext variables for sensitive hashes.' },
+      { type: 'admin', text: 'Hot-patched the live feed decryption engine. Code injection vulnerability closed. Memory leaks on the WebSocket client have dropped by 34%.' },
+      { type: 'bot', text: 'Encrypted data packet tracking initialized for build_v3.5.0-beta. Routing keys through localized proxy loops.' }
+    ];
+
+    // Element Selectors
+    const lockedState = document.getElementById('lockedState');
+    const unlockedInterface = document.getElementById('unlockedInterface');
+    const decryptInput = document.getElementById('decryptInput');
+    const decryptBtn = document.getElementById('decryptBtn');
+    const inputWrapper = document.getElementById('inputWrapper');
+    const logStream = document.getElementById('logStream');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const terminalMsgInput = document.getElementById('terminalMsgInput');
+    const canvas = document.getElementById('packetCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Engine States
+    const DECRYPTION_KEY = "W-BETA";
+    let isUnlocked = false;
+    let packetNodes = [];
+
+    // Formatted logs builder
+    function getTimestamp() {
+      const now = new Date();
+      return `[${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+    }
+
+    function writeToStream(type, text, isWarn = false) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      
+      let tagHTML = '';
+      if(type === 'admin') tagHTML = `<span class="tag-admin">[SYSTEM_ADMIN]</span>`;
+      else if(type === 'bot') tagHTML = `<span class="tag-bot">[NETWORK_BOT]</span>`;
+      else if(type === 'mgr') tagHTML = `<span class="tag-mgr">[OPERATIONS_MGR]</span>`;
+      else tagHTML = `<span class="tag-admin" style="color: var(--text-muted-gold)">[TERMINAL_USER]</span>`;
+
+      entry.innerHTML = `
+        <span class="timestamp">${getTimestamp()}</span> 
+        ${tagHTML} :: 
+        <span class="${isWarn ? 'msg-warn' : 'msg-text'}">${text}</span>
+      `;
+      
+      logStream.appendChild(entry);
+      logStream.scrollTop = logStream.scrollHeight;
+
+      // Trigger structural node hit on canvas reward if unlocked
+      if (isUnlocked) createPacketNode();
+    }
+
+    // Decryption processing engine
+    function attemptDecryption() {
+      const val = decryptInput.value.trim();
+      
+      if(val.toUpperCase() === DECRYPTION_KEY) {
+        isUnlocked = true;
+        
+        // Transform system UI state headers
+        statusDot.classList.add('active');
+        statusText.innerText = "STREAM_DECRYPTED // OPEN_LINK";
+        statusText.style.color = "var(--text-main)";
+
+        // Interface transition
+        lockedState.classList.add('hidden');
+        unlockedInterface.classList.add('visible');
+        
+        // Stream in system broadcasts sequentially
+        backlogBroadcasts.forEach((msg, index) => {
+          setTimeout(() => {
+            writeToStream(msg.type, msg.text, msg.isWarn);
+          }, index * 350);
+        });
+
+        // Initialize Canvas reward frame loop
+        resizeCanvas();
+        initCanvasReward();
+
+      } else {
+        // Denial visual feedback loop
+        inputWrapper.classList.add('error-shake');
+        decryptInput.value = '';
+        decryptInput.placeholder = "INVALID_CRYPT_SIG // ACCESS_DENIED";
+        setTimeout(() => {
+          inputWrapper.classList.remove('error-shake');
+        }, 400);
+      }
+    }
+
+    // Event hooks
+    decryptBtn.addEventListener('click', attemptDecryption);
+    decryptInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') attemptDecryption(); });
+    
+    terminalMsgInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && terminalMsgInput.value.trim() !== '') {
+        writeToStream('user', terminalMsgInput.value.trim());
+        terminalMsgInput.value = '';
+      }
+    });
+
+    window.addEventListener('resize', () => { if(isUnlocked) resizeCanvas(); });
+
+    // Interactive Reward Component: Canvas Data Stream Visualizer
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height - 35; // account for headers
+    }
+
+    function createPacketNode() {
+      packetNodes.push({
+        x: Math.random() * canvas.width,
+        y: canvas.height,
+        targetY: Math.random() * (canvas.height * 0.2),
+        speed: 1.5 + Math.random() * 2,
+        size: 2 + Math.random() * 3,
+        alpha: 1,
+        meta: `0x${Math.floor(Math.random()*16777215).toString(16).toUpperCase()}`
+      });
+    }
+
+    function initCanvasReward() {
+      function draw() {
+        ctx.fillStyle = '#030305';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid backing architecture
+        ctx.strokeStyle = '#1a1a26';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for(let x=0; x<canvas.width; x+=gridSize) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for(let y=0; y<canvas.height; y+=gridSize) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+
+        // Render packets streaming upwards
+        packetNodes.forEach((node, idx) => {
+          node.y -= node.speed;
+          if(node.y <= node.targetY) {
+            node.alpha -= 0.02; // fade out at target height matrix
+          }
+
+          // Node styling
+          ctx.fillStyle = `rgba(98, 0, 238, ${node.alpha})`;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#6200EE';
+          ctx.fillRect(node.x, node.y, node.size, node.size);
+          ctx.shadowBlur = 0; // reset
+
+          // Metadata strings tagged onto larger packets
+          if(node.size > 3 && node.alpha > 0.4) {
+            ctx.fillStyle = `rgba(197, 168, 128, ${node.alpha * 0.5})`;
+            ctx.font = "8px 'DM Mono'";
+            ctx.fillText(node.meta, node.x + 8, node.y + 4);
+          }
+
+          if(node.alpha <= 0) packetNodes.splice(idx, 1);
+        });
+
+        // Ambient random packets seeding background traffic
+        if(Math.random() < 0.03) createPacketNode();
+
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    }
+  </script>
+</body>
+</html>
