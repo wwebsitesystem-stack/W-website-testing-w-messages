@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexus Chat | Premium Real-time Communication</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono&family=Playfair+Display&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0f172a;
@@ -24,10 +24,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
         }
 
         body {
+            font-family: 'Inter', sans-serif;
             background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
             color: var(--text-primary);
             height: 100vh;
@@ -60,11 +60,12 @@
             outline: none;
             background: var(--msg-sent);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px var(--neon-glow);
+            font-family: 'Inter', sans-serif;
         }
 
         button:hover {
@@ -81,6 +82,16 @@
             background: rgba(255,255,255,0.2);
         }
 
+        button.google-btn {
+            background: white;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        }
+
+        button.google-btn:hover {
+            box-shadow: 0 6px 20px rgba(255,255,255,0.2);
+        }
+
         /* Inputs */
         input {
             width: 100%;
@@ -91,6 +102,7 @@
             color: white;
             font-size: 14px;
             transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
         }
 
         input:focus {
@@ -148,29 +160,10 @@
         .auth-card h1 {
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             background: linear-gradient(to right, #fff, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-weight: 600;
-        }
-
-        .auth-tab.active {
-            background: rgba(255,255,255,0.1);
         }
 
         /* Sidebar */
@@ -205,6 +198,13 @@
             position: relative;
         }
 
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
         .status-dot {
             position: absolute;
             bottom: 0;
@@ -214,15 +214,20 @@
             background: var(--success);
             border-radius: 50%;
             border: 2px solid var(--bg-color);
+            z-index: 2;
         }
 
         .user-info {
             flex: 1;
+            overflow: hidden;
         }
 
         .user-name {
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .user-status {
@@ -324,6 +329,13 @@
             font-size: 14px;
             font-weight: bold;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .msg-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .msg-content {
@@ -465,6 +477,22 @@
 </head>
 <body>
 
+    <div id="testing-mode-frame" style="display: none; position: fixed; inset: 0; background: #050508; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 99999; padding: 2rem; font-family: 'Inter', sans-serif;">
+      <div class="terminal-card" style="background: #0d0d16; border: 1px dashed #6200EE; padding: 4rem; max-width: 600px; width: 100%; box-shadow: 0 15px 40px rgba(98, 0, 238, 0.05);">
+        <div class="terminal-header" style="font-family: 'DM Mono', monospace; color: #6200EE; font-size: 0.75rem; letter-spacing: 0.2em; margin-bottom: 1.5rem;">
+          // STAGE TESTING STATE TERMINAL
+        </div>
+        <h2 style="font-family: 'Playfair Display', serif; font-weight: 400; font-size: 2.5rem; color: #f0ece2; margin-bottom: 1rem;">
+          Validation In Progress
+        </h2>
+        <div class="overlay-divider" style="width: 48px; height: 1px; background: #6200EE; margin: 1.5rem auto; opacity: 0.6;"></div>
+        <p style="font-family: 'DM Mono', monospace; font-size: 0.85rem; color: #8e8a80; line-height: 1.8;">
+          W-SUITE Core V2.1 sandbox controls are active.<br>
+          Engineering evaluation is taking place live.
+        </p>
+      </div>
+    </div>
+
     <div id="global-loader">
         <span class="loader"></span>
     </div>
@@ -472,22 +500,18 @@
     <div id="auth-screen" class="glass">
         <div class="auth-card glass">
             <h1>Nexus Chat</h1>
-            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Secure real-time communication</p>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 30px;">Secure real-time communication</p>
             
-            <div class="auth-tabs">
-                <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</div>
-                <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</div>
-            </div>
-
-            <form id="auth-form" onsubmit="handleAuth(event)">
-                <div id="register-fields" style="display: none; margin-bottom: 15px;">
-                    <input type="text" id="auth-username" placeholder="Username (Required for Register)">
-                </div>
-                <input type="email" id="auth-email" placeholder="Email Address" required style="margin-bottom: 15px;">
-                <input type="password" id="auth-password" placeholder="Password" required style="margin-bottom: 20px;">
-                <button type="submit" id="auth-btn" style="width: 100%;">Sign In</button>
-                <div id="auth-error" style="color: var(--danger); font-size: 13px; margin-top: 15px; display: none;"></div>
-            </form>
+            <button class="google-btn" onclick="handleGoogleLogin()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
+            </button>
+            <div id="auth-error" style="color: var(--danger); font-size: 13px; margin-top: 15px; display: none;"></div>
         </div>
     </div>
 
@@ -539,30 +563,30 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, serverTimestamp, onDisconnect, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set, update, serverTimestamp, onDisconnect, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         // Firebase Configuration
         const firebaseConfig = {
-  apiKey: "AIzaSyBnMDrhVGji9QmlfGnwpfkjjMTKNrYUWKY",
-  authDomain: "w-website-api.firebaseapp.com",
-  projectId: "w-website-api",
-  storageBucket: "w-website-api.firebasestorage.app",
-  messagingSenderId: "723905564804",
-  appId: "1:723905564804:web:94027e2810e2971037f2d1",
-  measurementId: "G-3T1EGHY1KD"
-};
+            apiKey: "AIzaSyChx24EPK7w1f7SGVYraI993TkC89ZxiZo",
+            authDomain: "wwebsite-ae20b.firebaseapp.com",
+            databaseURL: "https://wwebsite-ae20b-default-rtdb.firebaseio.com/",
+            projectId: "wwebsite-ae20b",
+            storageBucket: "wwebsite-ae20b.firebasestorage.app",
+            messagingSenderId: "1073638981689",
+            appId: "1:1073638981689:web:1fceb547ed3704b782cde8",
+            measurementId: "G-HK8S5YRG4J"
+        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
+        const googleProvider = new GoogleAuthProvider();
 
         // Global State
         let currentUser = null;
         let currentChannelId = 'global';
-        let currentMessagesRef = null;
-        let authMode = 'login'; // 'login' or 'register'
 
         // UI Elements
         const globalLoader = document.getElementById('global-loader');
@@ -580,40 +604,26 @@
         }, 1000);
 
         // ----------------------------------------------------
-        // AUTHENTICATION LOGIC
+        // AUTHENTICATION LOGIC (Google Only)
         // ----------------------------------------------------
         
-        window.switchAuthTab = (mode) => {
-            authMode = mode;
-            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
-            document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-            document.getElementById('register-fields').style.display = mode === 'register' ? 'block' : 'none';
-            document.getElementById('auth-btn').innerText = mode === 'register' ? 'Create Account' : 'Sign In';
-            document.getElementById('auth-error').style.display = 'none';
-        };
-
-        window.handleAuth = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const username = document.getElementById('auth-username').value;
+        window.handleGoogleLogin = async () => {
             const errorDiv = document.getElementById('auth-error');
-
+            errorDiv.style.display = 'none';
+            
             try {
-                if (authMode === 'register') {
-                    if (!username) throw new Error("Username is required.");
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await updateProfile(userCredential.user, { displayName: username });
-                    
-                    // Save user to DB
-                    await set(ref(db, 'users/' + userCredential.user.uid), {
-                        username: username,
-                        email: email,
-                        createdAt: serverTimestamp()
-                    });
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                }
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+                
+                // Update User Details in DB
+                const userRef = ref(db, 'users/' + user.uid);
+                await update(userRef, {
+                    username: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    photoURL: user.photoURL || '',
+                    lastLogin: serverTimestamp()
+                });
+                
             } catch (error) {
                 errorDiv.innerText = error.message;
                 errorDiv.style.display = 'block';
@@ -635,9 +645,17 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                // Update UI
-                document.getElementById('current-user-name').innerText = user.displayName || user.email.split('@')[0];
-                document.getElementById('current-user-avatar').innerText = (user.displayName || user.email).charAt(0).toUpperCase();
+                
+                // Update UI Profile Data
+                const displayName = user.displayName || user.email.split('@')[0];
+                document.getElementById('current-user-name').innerText = displayName;
+                
+                const avatarContainer = document.getElementById('current-user-avatar');
+                if (user.photoURL) {
+                    avatarContainer.innerHTML = `<img src="${user.photoURL}" alt="Avatar"> <div class="status-dot"></div>`;
+                } else {
+                    avatarContainer.innerHTML = `${displayName.charAt(0).toUpperCase()} <div class="status-dot"></div>`;
+                }
                 
                 authScreen.classList.add('hidden');
                 appContainer.classList.add('active');
@@ -671,7 +689,8 @@
                     set(presenceRef, {
                         state: 'online',
                         last_changed: serverTimestamp(),
-                        username: currentUser.displayName || currentUser.email.split('@')[0]
+                        username: currentUser.displayName || currentUser.email.split('@')[0],
+                        photoURL: currentUser.photoURL || ''
                     });
                 }
             });
@@ -710,9 +729,15 @@
                     if (data.state === 'online') {
                         const div = document.createElement('div');
                         div.className = 'lobby-item';
+                        
+                        let avatarHTML = `<div style="width:24px; height:24px; border-radius:50%; background:var(--msg-received); display:flex; align-items:center; justify-content:center; font-size:10px;">${data.username.charAt(0).toUpperCase()}</div>`;
+                        if (data.photoURL) {
+                            avatarHTML = `<img src="${data.photoURL}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">`;
+                        }
+
                         div.innerHTML = `
-                            <div style="width:24px; height:24px; border-radius:50%; background:var(--msg-received); display:flex; align-items:center; justify-content:center; font-size:10px;">${data.username.charAt(0).toUpperCase()}</div>
-                            <span style="font-size:13px;">${data.username}</span>
+                            ${avatarHTML}
+                            <span style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data.username}</span>
                         `;
                         usersList.appendChild(div);
                     }
@@ -756,6 +781,7 @@
                 text: text,
                 uid: currentUser.uid,
                 author: currentUser.displayName || currentUser.email.split('@')[0],
+                photoURL: currentUser.photoURL || '',
                 timestamp: serverTimestamp()
             });
 
@@ -773,17 +799,20 @@
             const div = document.createElement('div');
             div.className = `message ${isMe ? 'sent' : 'received'}`;
             
-            // Format time (fallback if timestamp isn't server-synced yet)
+            // Format time
             let timeString = 'Just now';
             if (data.timestamp) {
                 const date = new Date(data.timestamp);
                 timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
 
-            const initial = data.author.charAt(0).toUpperCase();
+            let avatarHTML = `<div class="msg-avatar">${data.author.charAt(0).toUpperCase()}</div>`;
+            if (data.photoURL) {
+                avatarHTML = `<div class="msg-avatar"><img src="${data.photoURL}" alt="${data.author}"></div>`;
+            }
 
             div.innerHTML = `
-                <div class="msg-avatar">${initial}</div>
+                ${avatarHTML}
                 <div class="msg-content">
                     <div class="msg-header">
                         <span class="msg-author">${data.author}</span>
