@@ -566,16 +566,16 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, update, serverTimestamp, onDisconnect, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        // Firebase Configuration
+        // Updated Firebase Configuration
         const firebaseConfig = {
-  apiKey: "AIzaSyBnMDrhVGji9QmlfGnwpfkjjMTKNrYUWKY",
-  authDomain: "w-website-api.firebaseapp.com",
-  projectId: "w-website-api",
-  storageBucket: "w-website-api.firebasestorage.app",
-  messagingSenderId: "723905564804",
-  appId: "1:723905564804:web:94027e2810e2971037f2d1",
-  measurementId: "G-3T1EGHY1KD"
-};
+            apiKey: "AIzaSyBnMDrhVGji9QmlfGnwpfkjjMTKNrYUWKY",
+            authDomain: "w-website-api.firebaseapp.com",
+            projectId: "w-website-api",
+            storageBucket: "w-website-api.firebasestorage.app",
+            messagingSenderId: "723905564804",
+            appId: "1:723905564804:web:94027e2810e2971037f2d1",
+            measurementId: "G-3T1EGHY1KD"
+        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -586,6 +586,8 @@
         // Global State
         let currentUser = null;
         let currentChannelId = 'global';
+        let currentMessagesQuery = null;
+        let unsubscribeMessages = null;
 
         // UI Elements
         const globalLoader = document.getElementById('global-loader');
@@ -662,6 +664,10 @@
                 setupPresence();
                 initializeChatData();
             } else {
+                if (unsubscribeMessages) {
+                    unsubscribeMessages();
+                    unsubscribeMessages = null;
+                }
                 currentUser = null;
                 authScreen.classList.remove('hidden');
                 appContainer.classList.remove('active');
@@ -763,9 +769,15 @@
         function loadMessages(channelId) {
             messagesContainer.innerHTML = '';
             
+            // Detach previous listeners to maintain performance and clear message stacks
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+            }
+
             const messagesQuery = query(ref(db, `messages/${channelId}`), limitToLast(50));
             
-            onChildAdded(messagesQuery, (snapshot) => {
+            // Listen dynamically to real-time additions globally visible across connected users
+            unsubscribeMessages = onChildAdded(messagesQuery, (snapshot) => {
                 const data = snapshot.val();
                 renderMessage(data);
             });
